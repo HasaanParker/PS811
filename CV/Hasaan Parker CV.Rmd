@@ -1,0 +1,52 @@
+---
+name: Hasaan
+surname: Parker
+position: "Ph.D Student"
+address: "Department of Political Science, University of Wisconsin-Madison"
+phone: (216) 867 5309
+www: github.com/hasaanparker
+email: "hwparker@wisc.edu"
+github: HasaanParker
+linkedin: HasaanParker
+date: "`r format(Sys.time(), '%B %Y')`"
+output: vitae::hyndman
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(vitae)
+```
+
+# Some stuff about me
+
+ * I have all my fingers.
+ * I can predict the future
+ * I may or may not be an R god
+
+# Education
+
+```{r}
+library(tibble)
+tribble(
+  ~ Degree, ~ Year, ~ Institution, ~ Where,
+  "BS, Political Science", "2016-2020", "The Ohio State University", "Columbus, OH",
+  "PhD Student", "2021-", "University of Wisconsin-Madison", "Madison, WI"
+) %>% 
+  detailed_entries(Degree, Year, Institution, Where)
+```
+
+# Nobel Prizes
+
+```{r}
+tribble(
+  ~Year, ~Type, ~Desc,
+  2050, "Economics", "Awarded for his work on increasing our understanding of international organizations",
+  2060, "Peace ", "Awarded for actually bringing about world peace"
+) %>% 
+  brief_entries(
+    glue::glue("Nobel Prize in {Type}"),
+    Year, 
+    Desc
+  )
+```
+
