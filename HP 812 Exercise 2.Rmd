@@ -1,0 +1,71 @@
+---
+title: "812 Exercise 2"
+author: "Hasaan Parker"
+output: pdf_document
+---
+
+# Binomial Distribution
+
+Always use set.seed(12345)
+```{r, include=FALSE}
+set.seed(12345)
+```
+
+### 1) Conduct a trial of flipping a fair coin 5 times. Let heads equal a success in the trial. What is the number of successes in the trial? Then flip the coin 10 times, 50 times, 100 times, 1000, and 10000 times. What happens as the number of coin flips increases? Hint use rbinom()
+```{r}
+q1 <- rbinom(n = 5,size = 1, prob =.5)
+q1
+a <- c(10, 50, 100, 1000, 10000)
+b <- sapply(a, rbinom, size=1, prob = .5)
+sapply(b, mean)
+```
+As we add more observations, we generally get closer to the true probability of 0.5. When I counduct a trial with only five observations, I got 2 heads.
+
+### 2) What does the binomial distribution look like? Generate some data to visual the distribution. Use 1000 observations across 100 trials. Assume the coin is weighted to favor heads, so the probability of success equals 0.70. What is the mean number of successes across the trials?
+```{r}
+x <- rbinom(1000, 100, .7)
+mean_x <- mean(x)
+```
+The mean number of successes in each trial is 69.94.
+
+### 3) Create a histogram of the trials. Generate a red dashed line at the mean. Make sure the labels/titles of the histogram are appropriately labeled. Hints: use hist() and abline()
+```{r}
+hist(x, main = "Histogram of 1000 draws of 100 trials, p=.7")
+abline(v = mean_x, col = "red")
+legend("topright", col = "red", legend = "Mean", lty = 1)
+```
+
+### 4) Suppose that we flip the same coin 100 times. What is the probability that the coin lands on heads 70 times? How does this compare to the data you generated in question 2? Hint: use dbinom()
+```{r}
+dbinom(70, 100, .7)
+mean(x == 70)
+
+```
+I calculate that the probability of getting exactly 70 heads when you flip the coin 100 times is 8%. In our data from question 2, 10.3% of the trials ended up with 70 successes.
+
+### 5) Suppose that we flip the same coin 100 times. What is the probability that the coin lands on heads 70 times or less? How does this compare to the data generated in question 2? Hint: use pbinom()
+```{r}
+pbinom(70, 100, .7) #This means how many times you get 70 or fewer
+mean(x <= 70)
+```
+The probability of getting 70 or fewer heads is 53.77%, and in Q2 data 55.3% of the coin flips had 70 or fewer heads. 
+
+### 6) Every year, many people miss flights because they cancel at the last minute or are late to the airport. Research by Leder, et al. (2002) suggests that about 12% of airline passengers miss flights every year for these reasons. This tendency for a significant percentage of passengers to miss their flights is well known among airlines. To deal with this, airlines typically overbook seats, meaning they sell more tickets for a flight than there are seats available because they can count on a significant percentage of passengers to fail to show up. This is a somewhat risky strategy because there will be times when too many passengers show up and not all of them will be able to get seats. How often can we expect this to happen? We can use the binomial distribution to model an example. Suppose that there is a flight with 100 seats, and 110 tickets have been sold. What is the probability that more than 100 passengers will show up on time for this flight? I.e., how likely is it that at least one too many people will show up for this flight and be unable to board because there isn’t any space?
+```{r}
+pbinom(100, 110, .88, lower.tail = F)
+
+```
+There is a 7.74% chance that at leasat one too many passengers will show up to this flight.
+
+### 7) Assume that airlines only want a 5% risk that at least one too many people show up for the flight and are unable to board. How many tickets should they sell? Plot the risk of overbooking from 101-115 tickets.
+```{r}
+b <- 101:115
+z <- pbinom(100, b, .88, lower.tail = F)
+plot(b, z, 
+     type = "l", 
+     main = "Risk of Overbooking by Number of Tickets sold",
+     xlab = "Number of Tickets sold",
+     ylab = "Probability of Overbooking")
+abline(h = .05, col = "red")
+```
+They should sell 109 tickets to get a 5% chance of overbooking.  
