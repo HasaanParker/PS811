@@ -1,0 +1,140 @@
+---
+title             : "811/812 Final Project"
+shorttitle        : "Final Project"
+
+author: 
+  - name          : "Hasaan Parker"
+    affiliation   : "1"
+    corresponding : yes    # Define only one corresponding author
+    address       : "North Hall"
+    email         : "hwparker@wisc.edu"
+    role:         
+      - All Credit to the Author
+
+affiliation:
+  - id            : "1"
+    institution   : "University of Wisconsin-Madison"
+
+
+
+keywords          : "Data analysis, LAPOP, Survey, approval, trust"
+wordcount         : "450"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : yes
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : no
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_pdf
+
+
+---
+```{r global options, include=F}
+knitr::opts_chunk$set(fig.pos = 'H')
+```
+
+```{r setup, include = FALSE}
+library("papaja")
+library(tidyverse)
+library(haven)
+r_refs("r-references.bib")
+library(texreg)
+library(kableExtra)
+library(broom)
+theme_set(theme_bw())
+```
+
+```{r analysis-preferences, include=FALSE}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+
+data <- read_dta("MEX_2021_LAPOP_AmericasBarometer_v1.0_w.dta") %>% 
+  mutate(age = q2, 
+         female = q1tb == 1)
+```
+
+
+In this paper I will be examining survey data from the 2021 Americas Barometer survey, specifically the wave of the survey conducted in Mexico. This survey is part of a larger project that asks questions about social, political, and economic attitudes and perceptions across most of the countries in North and South America. In this round of the survey, there were 2998 respondents, with an average age of 41 years od. 51.9% of the sample was female, and 64.4% live in cities or the areas immediately surrounding cities. Here I have included a table of some important summary statistics. An interesting thing about this survey is that, possibly due to COVID, about one half of the subjects were given one form, (A), and others were given form (B). 
+```{r, echo=FALSE}
+fig1 <- data %>% 
+  summarise(n = n(),
+            "Mean Presidential Approval" = round(mean(m1, na.rm = T),1),
+            "Mean Trust in Presidency" = round(mean(b21a, na.rm = T),1),
+  "Mean Age" = round(mean(age)),
+  "Female (%)" = round(mean(female) *100, 1),
+ "Percentage Living in or Surrounding a City" = 
+   round((100) * sum(ur1new < 3 ,na.rm=T )/length(data$ur1new), digits = 1)) 
+
+fig1 %>%
+  kbl(caption = "Mean Statistics of Important Variables") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>% 
+  kable_styling(latex_options = c("hold_position", "scale_down"))
+```
+
+
+## Survey Items
+The survey questionnaire included 264 items, however as I mentioned above half the total respondents received Questionnaire A and the other half Questionnaire B.  I will pick out three items of interest and illustrate the differences between urban and rural citizens. Question B21A and M1 are used on forms A and B, respectively. B21A asks about trust in the executive, without naming the president (Andrés Manuel López Obrador) directly, while M1 asks about Presidential approval, directly naming AMLO. 
+
+```{r, echo=F}
+data %>% 
+  select(ur1new, m1, b21a) %>% 
+  drop_na(ur1new) %>% 
+  group_by(ur1new) %>% 
+  summarise(avg_approve = mean(m1, na.rm = T)) %>% 
+  ggplot(aes(as_factor(ur1new), avg_approve)) + 
+    geom_col(fill = "#006341") + 
+  scale_x_discrete(labels = c("City", "Near a city", "Village near rural area", "Rural area")) + 
+  scale_y_continuous(limits = c(0,5)) +
+  labs(title = " Approval for AMLO doesn't vary much by where one lives",
+       subtitle = "Scale of  1-5, from Very Good to Very Bad",
+       x = "Type of Residence",
+       y = "Average Approval")
+```
+As shown in this bar graph, the approval for Mexican president Andres Manuel Lopez Obrador does not vary much based on where respondents live. All groups averages are between about 2.5 and 3, so between "Good" and "Neither good nor bad, average". Alternatively, we can look at the question that asks different respondents how much they trust the President, but wihtout mentioning any specific president. These two questionnaires were sent out at roughly the same time, so AMLO is still the president as in the previous example. Thus, any differnces may be interpreted as approval for AMLO in particular contrasted with trust (different but related to approval) in the position of the presidency in general. 
+```{r, echo=F}
+data %>% 
+  select(ur1new, m1, b21a) %>% 
+  drop_na(ur1new) %>% 
+  group_by(ur1new) %>% 
+  summarise(avg_trust = mean(b21a, na.rm = T)) %>% 
+  ggplot(aes(as_factor(ur1new), avg_trust)) + 
+    geom_col(fill = "#CE1126") + 
+  scale_x_discrete(labels = c("City", "Near a city", "Village near rural area", "Rural area")) + 
+  scale_y_continuous(limits = c(0,7)) +
+  labs(title = " Trust in the Presidency doesn't vary much by where one lives",
+       subtitle = "Scale of  1-7, from `None` to `A lot`",
+       x = "Type of Residence",
+       y = "Average Trust")
+```
+As is the case for AMLO approval, there are not strong differences in trust in the presidency based on where a respondent lives. Since this question has higher numbers meaning more trust and the previous question had lower numbers meaning more approval, these two graphs both show vilagers having the highest presidential approval/trust perceptions among the sample. 
+
+Finally, I will run two simple regressions,  predicting presidential approval and executive trust based on gender, age, level of urbanization, and their level of education. 
+```{r}
+data <- data %>% mutate(ur1new = as_factor(ur1new),
+                edr = as_factor(edr),
+                female = as_factor(female))
+reg_approve <- lm(m1~female + age +ur1new + edr, data = data) 
+reg_trust <- lm(b21a~female + age + ur1new + edr, data = data) 
+reg_approve %>% 
+  tidy() %>% 
+  kbl(caption = "Model 1: Presidential Approval Rating") %>%
+  kable_classic(full_width = F, html_font = "Cambria") %>% 
+  kable_styling(latex_options = c("hold_position", "scale_down"))
+reg_trust %>% 
+  tidy() %>%
+  kbl(caption = "Model 2: Executive Trust") %>% 
+  kable_classic(full_width = F, html_font = "Cambria") %>% 
+  kable_styling(latex_options = c("hold_position", "scale_down"))
+
+```
+In either model, when education level and urbanization are treated as proper categorical variables, none are statistically significant predictor of except living in a village/town near a rural area for presidential approval, and gender alongside primary and secondary education levels in the executive trust model.  
+
+
